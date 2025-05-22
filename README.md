@@ -1,8 +1,4 @@
-# SmartRoutineAI
-
-SmartRoutine AI é um assistente pessoal inteligente desenvolvido em Python, capaz de entender linguagem natural, analisar humor, organizar tarefas e sugerir rotinas saudáveis com base no seu comportamento diário.
-
----
+# SmartRoutine AI
 
 ## ⭐ Descrição do Projeto (Formato STAR)
 
