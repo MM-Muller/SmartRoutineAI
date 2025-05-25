@@ -28,7 +28,6 @@ O resultado é um assistente pessoal prático e funcional, capaz de interagir po
 - SpeechRecognition / pyttsx3
 - SQLite3
 - Google API
-- Pytest
 
 ---
 
