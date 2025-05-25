@@ -1,12 +1,18 @@
 import streamlit as st
 import sys, os
 import time
+from dotenv import load_dotenv
+
+# Carrega as variáveis de ambiente do arquivo .env
+load_dotenv()
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from core.nlp import interpret_command
 from core.scheduler import add_task, list_tasks, delete_task
 from core.emotion_analysis import analyze_mood
 from core.recommender import suggest_routine
+from core.email_summary import EmailSummarizer
 from data.database import connect
 from datetime import datetime, timedelta
 from voice.voice_input import VoiceRecognizer, VoiceInputError
@@ -17,6 +23,11 @@ from core.calendar_integration import (
     deletar_evento_google_calendar,
     CalendarError
 )
+
+# Verifica se a chave da API do OpenAI está configurada
+if not os.getenv("OPENAI_API_KEY"):
+    st.error("⚠️ OpenAI API key not found. Please set OPENAI_API_KEY in your .env file.")
+    st.stop()
 
 st.set_page_config(page_title="SmartRoutine AI", layout="centered")
 st.title("🧠 SmartRoutine AI")
@@ -35,6 +46,9 @@ if "voice_recognizer" not in st.session_state:
 if "voice_output" not in st.session_state:
     st.session_state.voice_output = VoiceOutput()
 
+if "email_summarizer" not in st.session_state:
+    st.session_state.email_summarizer = EmailSummarizer()
+
 # Create placeholder for temporary messages
 if "message_placeholder" not in st.session_state:
     st.session_state.message_placeholder = st.empty()
@@ -50,7 +64,9 @@ def save_mood_to_db(text, mood, confidence):
         conn.commit()
 
 # Create tabs
-tasks_tab, mood_tab, routine_tab, calendar_tab = st.tabs(["📋 Tasks", "😊 Mood", "🧭 Routine", "📅 Calendar"])
+tasks_tab, mood_tab, routine_tab, calendar_tab, email_tab = st.tabs([
+    "📋 Tasks", "😊 Mood", "🧭 Routine", "📅 Calendar", "📧 Email"
+])
 
 # --- Tasks Tab ---
 with tasks_tab:
@@ -344,3 +360,79 @@ with calendar_tab:
         st.error(f"❌ Error accessing Google Calendar: {str(e)}")
         st.session_state.voice_output.speak(f"Error accessing Google Calendar: {str(e)}")
         st.info("Please make sure you have configured your Google Calendar credentials correctly.")
+
+# --- Email Tab ---
+with email_tab:
+    st.subheader("Email Analysis")
+    
+    # Initialize email_input in session state if not exists
+    if "email_input" not in st.session_state:
+        st.session_state.email_input = ""
+    
+    def analyze_email_callback():
+        if st.session_state.email_input:
+            try:
+                # Análise do e-mail
+                summary_result = st.session_state.email_summarizer.summarize_email(st.session_state.email_input)
+                sentiment_result = st.session_state.email_summarizer.analyze_sentiment(st.session_state.email_input)
+                
+                # Exibe o resumo
+                st.markdown("### 📝 Email Summary")
+                st.write(summary_result["summary"])
+                
+                # Exibe metadados
+                with st.expander("📊 Analysis Details"):
+                    st.write("**Original Length:**", summary_result["metadata"]["original_length"], "characters")
+                    st.write("**Summary Length:**", summary_result["metadata"]["summary_length"], "characters")
+                    st.write("**Model:**", summary_result["metadata"]["model"])
+                    st.write("**Timestamp:**", summary_result["metadata"]["timestamp"])
+                
+                # Exibe análise de sentimento
+                st.markdown("### 😊 Sentiment Analysis")
+                st.write(sentiment_result["sentiment"])
+                
+                # Feedback de voz
+                st.session_state.voice_output.speak("Email analysis complete")
+                
+            except Exception as e:
+                st.error(f"❌ Error: {str(e)}")
+                st.session_state.voice_output.speak(f"Error analyzing email: {str(e)}")
+    
+    def voice_email_callback():
+        try:
+            st.session_state.message_placeholder.info("🎙️ Listening...")
+            st.session_state.voice_output.speak("Listening...")
+            texto, confianca = st.session_state.voice_recognizer.ouvir_comando(mostrar_feedback=False)
+            
+            if confianca >= 0.6:
+                st.session_state.email_input = texto
+                st.session_state.message_placeholder.success(f"✅ Recognized: {texto}")
+                st.session_state.voice_output.speak(f"Recognized: {texto}")
+                time.sleep(1)
+                st.session_state.message_placeholder.empty()
+            else:
+                st.session_state.message_placeholder.warning(f"⚠️ Low confidence ({confianca:.2%}). Please try again.")
+                st.session_state.voice_output.speak("Low confidence. Please try again.")
+                time.sleep(2)
+                st.session_state.message_placeholder.empty()
+                
+        except VoiceInputError as e:
+            st.session_state.message_placeholder.error(f"❌ Error: {str(e)}")
+            st.session_state.voice_output.speak(f"Error: {str(e)}")
+            time.sleep(2)
+            st.session_state.message_placeholder.empty()
+    
+    # Create two columns for text input and voice button
+    col1, col2 = st.columns([0.8, 0.2])
+    
+    with col1:
+        email_input = st.text_area(
+            "Paste your email here:",
+            key="email_input",
+            height=200
+        )
+    
+    with col2:
+        st.button("🎙️ Voice Input", key="voice_email_btn", on_click=voice_email_callback)
+    
+    st.button("Analyze Email", key="analyze_email_btn", on_click=analyze_email_callback)
