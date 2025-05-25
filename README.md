@@ -1,6 +1,6 @@
 # SmartRoutine AI
 
-## ⭐ Descrição do Projeto (Formato STAR)
+## ⭐ Descrição do Projeto
 
 Com o crescimento do home office e o excesso de notificações digitais, muitas pessoas têm dificuldade em manter uma rotina equilibrada, produtiva e saudável. Diante dessa situação, surgiu a necessidade de criar um assistente pessoal inteligente que pudesse compreender comandos naturais, organizar tarefas, analisar o estado emocional do usuário e fornecer recomendações personalizadas para melhorar a rotina diária.
 Para isso, foi desenvolvido o projeto SmartRoutine AI utilizando Python, inteligência artificial com processamento de linguagem natural (NLP), análise de sentimentos, além de integração com voz, e-mail e Google Calendar. A estrutura modular do projeto inclui um banco local SQLite para armazenar dados e uma interface amigável desenvolvida com Streamlit.
