@@ -61,7 +61,7 @@ with tasks_tab:
                 st.session_state.message_placeholder.empty()
     
     task_input = st.text_input(
-        "Add a new task (e.g., 'Study at 6pm' or 'Meeting with team at 2pm'):",
+        "Add/Create task (e.g., 'Team Meeting on June 15 at 2pm' or 'Project Review on 20/06 at 10am'):",
         key="task_input"
     )
     
@@ -76,7 +76,18 @@ with tasks_tab:
         for task in tasks:
             col1, col2 = st.columns([0.8, 0.2])
             with col1:
-                st.write(f"🕒 {task[2] or '--'} {task[3] or ''} — {task[1]}")
+                # Parse the datetime string
+                try:
+                    if task[2]:  # if datetime exists
+                        task_datetime = datetime.fromisoformat(task[2])
+                        # Format the date and time
+                        date_str = task_datetime.strftime("%A, %B %d")  # e.g., "Monday, January 1"
+                        time_str = task_datetime.strftime("%I:%M %p")   # e.g., "09:00 AM"
+                        st.write(f"📅 {date_str} at {time_str} — {task[1]}")
+                    else:
+                        st.write(f"⏰ No time set — {task[1]}")
+                except (ValueError, TypeError):
+                    st.write(f"⏰ {task[2] or 'No time set'} — {task[1]}")
             with col2:
                 if st.button("✔️ Done", key=f"done_{task[0]}"):
                     delete_task(task[0])

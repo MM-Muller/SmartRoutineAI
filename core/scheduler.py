@@ -9,12 +9,8 @@ def add_task(title, date_time=None):
     with connect() as conn:
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO tasks (title, date, time) VALUES (?, ?, ?)",
-            (
-                title,
-                date_time.split('T')[0] if date_time else None,
-                date_time.split('T')[1][:5] if date_time else None
-            )
+            "INSERT INTO tasks (title, datetime) VALUES (?, ?)",
+            (title, date_time)
         )
         conn.commit()
 
@@ -24,7 +20,7 @@ def list_tasks():
     """
     with connect() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT id, title, date, time, status FROM tasks WHERE status = 'pending'")
+        cursor.execute("SELECT id, title, datetime, status FROM tasks WHERE status = 'pending'")
         return cursor.fetchall()
 
 def mark_task_done(task_id):

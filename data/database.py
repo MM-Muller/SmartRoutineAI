@@ -12,12 +12,14 @@ def create_tables():
     with connect() as conn:
         cursor = conn.cursor()
 
+        # Drop the old tasks table if it exists
+        cursor.execute('DROP TABLE IF EXISTS tasks')
+
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS tasks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 title TEXT NOT NULL,
-                date TEXT,
-                time TEXT,
+                datetime TEXT,
                 status TEXT DEFAULT 'pending'
             )
         ''')
